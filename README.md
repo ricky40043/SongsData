@@ -93,6 +93,115 @@ uvicorn app.main:app --reload
 - `POST /api/imports/{staging_id}/approve`
 - `GET /api/songs/{song_id}/pptx`
 
+## Docker
+
+本專案可以直接包成 Docker image，內含 FastAPI 程式、PPT 模板與壓縮後的 SQLite seed database。
+
+Build：
+
+```bash
+docker build -t songs-data:local .
+```
+
+Run：
+
+```bash
+docker run --rm -p 10000:10000 songs-data:local
+```
+
+開啟：
+
+```text
+http://localhost:10000
+```
+
+啟動時會自動把：
+
+```text
+app/seed/songs.db.gz
+```
+
+還原成容器內的：
+
+```text
+data/songs.db
+```
+
+本機測試結果：
+
+```text
+/api/health -> {"status":"ok"}
+/api/stats  -> {"songs":16328,"staging":19227,"pending":0}
+image size  -> 約 303MB
+```
+
+## 部署到 Render
+
+本專案已包含 Render Blueprint 設定：
+
+```text
+render.yaml
+scripts/render_start.sh
+.python-version
+app/seed/songs.db.gz
+```
+
+### 部署方式
+
+1. 把專案推到 GitHub。
+2. 到 Render 建立 Blueprint，選這個 repo。
+3. Render 會讀取 `render.yaml` 自動建立 Python Web Service。
+
+目前 `render.yaml` 使用 Docker runtime：
+
+```yaml
+runtime: docker
+healthCheckPath: /api/health
+```
+
+Render Web Service 必須綁定 `0.0.0.0` 和 `$PORT`。`scripts/render_start.sh` 已處理：
+
+```bash
+python -m uvicorn app.main:app --host 0.0.0.0 --port "${PORT:-10000}"
+```
+
+### SQLite 固定資料庫
+
+Render 免費 Web Service 沒有 persistent disk，因此本專案採用「固定 SQLite 種子資料庫」：
+
+```text
+app/seed/songs.db.gz
+```
+
+服務啟動時會自動解壓成：
+
+```text
+data/songs.db
+```
+
+這代表：
+
+- 適合固定 16,000+ 首歌的查詢與 PPT 產生。
+- Render 重啟或重新部署後仍會從 seed 還原資料。
+- 不適合在 Render 上跑爬蟲後期待資料永久保存。
+- 若要更新歌曲庫，請在本機更新 `data/songs.db` 後重新產生 `app/seed/songs.db.gz` 並重新部署。
+
+重新產生 seed：
+
+```bash
+gzip -c data/songs.db > app/seed/songs.db.gz
+```
+
+### 若未來改外部資料庫
+
+若要改用 Supabase / Neon / Render Postgres，只要把 Render 的環境變數改成：
+
+```text
+DATABASE_URL=postgresql://USER:PASSWORD@HOST:PORT/DBNAME
+```
+
+但第一版最簡單、免費、最快能跑起來的方式仍是目前的 SQLite seed 檔。
+
 ## 產生 PPTX
 
 ```bash

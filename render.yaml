@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: songs-data
+    runtime: docker
+    plan: free
+    healthCheckPath: /api/health
+    envVars:
+      - key: DATABASE_URL
+        value: sqlite:///./data/songs.db
+      - key: CRAWLER_DELAY_SECONDS
+        value: "1.0"
+      - key: CRAWLER_TIMEOUT_SECONDS
+        value: "20"

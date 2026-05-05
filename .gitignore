@@ -6,5 +6,7 @@ data/*.db
 data/*.sqlite
 data/*.sqlite3
 data/exports/
+logs/
+*.egg-info/
 .pytest_cache/
 .ruff_cache/
