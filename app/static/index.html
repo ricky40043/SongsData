@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>詩歌資料庫</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <main class="app">
+      <header class="topbar">
+        <div>
+          <h1>詩歌資料庫</h1>
+          <p id="stats">載入中...</p>
+        </div>
+        <div class="top-actions">
+          <button id="adminToggleBtn" type="button">管理</button>
+          <button id="refreshBtn" type="button">重新整理</button>
+        </div>
+      </header>
+
+      <section class="search">
+        <input id="searchInput" type="search" placeholder="搜尋歌名或歌詞，例如：現在活著的不再是我" />
+        <button id="searchBtn" type="button">搜尋</button>
+        <button id="reviewBtn" class="admin-only" type="button" hidden>待審核</button>
+      </section>
+
+      <section class="layout">
+        <aside class="song-list">
+          <div class="list-head">
+            <span id="listTitle">所有歌曲</span>
+            <span id="countText"></span>
+          </div>
+          <div id="songs"></div>
+          <div class="pager">
+            <button id="prevBtn" type="button">上一頁</button>
+            <button id="nextBtn" type="button">下一頁</button>
+          </div>
+        </aside>
+
+        <article class="detail">
+          <div class="detail-head">
+            <h2 id="songTitle">選擇一首歌</h2>
+            <a id="pptLink" class="ppt-link" href="#" hidden>下載 PPTX</a>
+          </div>
+          <pre id="lyrics">左側會隨著爬蟲入庫更新。你可以搜尋歌詞片段或歌名。</pre>
+          <div id="reviewPanel" class="review-panel" hidden></div>
+        </article>
+      </section>
+    </main>
+    <script src="/static/app.js"></script>
+  </body>
+</html>

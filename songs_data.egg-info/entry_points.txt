@@ -1,0 +1,2 @@
+[console_scripts]
+songs = app.cli:app
