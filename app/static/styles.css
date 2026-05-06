@@ -103,6 +103,11 @@ input {
   overflow: hidden;
 }
 
+.song-list {
+  max-height: calc(100vh - 160px);
+  overflow-y: auto;
+}
+
 .list-head,
 .detail-head {
   display: flex;
