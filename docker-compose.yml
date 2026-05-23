@@ -1,0 +1,8 @@
+services:
+  app:
+    build: .
+    ports:
+      - "20400:10000"
+    environment:
+      - DATABASE_URL=sqlite:///./data/songs.db
+    restart: unless-stopped
