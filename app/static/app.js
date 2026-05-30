@@ -140,7 +140,13 @@ $("reviewPanel").addEventListener("click", async (event) => {
   await Promise.all([loadStats(), loadPendingReviews()]);
 });
 $("searchInput").addEventListener("keydown", (event) => {
-  if (event.key === "Enter") doSearch();
+  if (event.key === "Enter") {
+    event.preventDefault();
+    doSearch();
+  }
+});
+$("searchInput").addEventListener("search", (event) => {
+  doSearch();
 });
 $("prevBtn").addEventListener("click", () => {
   state.offset = Math.max(0, state.offset - state.limit);
