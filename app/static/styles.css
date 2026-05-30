@@ -61,6 +61,16 @@ button,
   text-decoration: none;
 }
 
+.title-area {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.back-btn {
+  display: none;
+}
+
 .top-actions {
   display: flex;
   gap: 8px;
@@ -229,5 +239,32 @@ mark {
 
   .search {
     grid-template-columns: 1fr;
+  }
+
+  .back-btn {
+    display: inline-block;
+    padding: 6px 10px;
+    font-size: 14px;
+    border-radius: 4px;
+    background: #eef4ff;
+    border: 1px solid #8fb3ff;
+    color: #1f2933;
+  }
+
+  /* 手機版分頁切換控制 */
+  .layout.view-list .song-list {
+    display: block;
+    max-height: calc(100vh - 180px);
+  }
+  .layout.view-list .detail {
+    display: none;
+  }
+
+  .layout.view-detail .song-list {
+    display: none;
+  }
+  .layout.view-detail .detail {
+    display: block;
+    min-height: calc(100vh - 180px);
   }
 }

@@ -83,10 +83,29 @@ async function loadSong(id) {
   $("lyrics").innerHTML = lyricsHtml;
   $("pptLink").hidden = false;
   $("pptLink").href = `/api/songs/${id}/pptx`;
+  showDetailView();
 }
 
 function escapeRegExp(string) {
   return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function showDetailView() {
+  state.activeView = "detail";
+  const layout = document.querySelector(".layout");
+  if (layout) {
+    layout.classList.remove("view-list");
+    layout.classList.add("view-detail");
+  }
+}
+
+function showListView() {
+  state.activeView = "list";
+  const layout = document.querySelector(".layout");
+  if (layout) {
+    layout.classList.remove("view-detail");
+    layout.classList.add("view-list");
+  }
 }
 
 async function loadPendingReviews() {
@@ -135,6 +154,7 @@ function doSearch() {
   if (state.currentSongId) {
     loadSong(state.currentSongId).catch(console.error);
   }
+  showListView();
 }
 
 function escapeHtml(text) {
@@ -182,6 +202,7 @@ $("searchInput").addEventListener("keydown", (event) => {
 $("searchInput").addEventListener("search", (event) => {
   doSearch();
 });
+$("backBtn").addEventListener("click", showListView);
 $("prevBtn").addEventListener("click", () => {
   state.offset = Math.max(0, state.offset - state.limit);
   refreshAll().catch(showError);
