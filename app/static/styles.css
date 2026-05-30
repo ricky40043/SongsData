@@ -168,6 +168,13 @@ input {
   line-height: 1.8;
 }
 
+#lyrics mark {
+  background: #ffeb3b;
+  color: #000000;
+  border-radius: 4px;
+  padding: 0 4px;
+}
+
 .review-panel {
   padding: 16px;
 }

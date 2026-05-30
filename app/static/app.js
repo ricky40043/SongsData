@@ -53,9 +53,22 @@ async function loadSong(id) {
   $("reviewPanel").hidden = true;
   $("lyrics").hidden = false;
   $("songTitle").textContent = song.title;
-  $("lyrics").textContent = song.lyrics || "沒有歌詞";
+
+  let lyricsHtml = escapeHtml(song.lyrics || "沒有歌詞");
+  const query = state.q ? state.q.trim() : "";
+  if (query) {
+    const escapedQuery = escapeRegExp(query);
+    const regex = new RegExp(`(${escapedQuery})`, "gi");
+    lyricsHtml = lyricsHtml.replace(regex, `<mark>$1</mark>`);
+  }
+
+  $("lyrics").innerHTML = lyricsHtml;
   $("pptLink").hidden = false;
   $("pptLink").href = `/api/songs/${id}/pptx`;
+}
+
+function escapeRegExp(string) {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 async function loadPendingReviews() {
