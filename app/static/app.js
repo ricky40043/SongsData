@@ -3,6 +3,7 @@ const state = {
   offset: 0,
   limit: 50,
   admin: false,
+  currentSongId: null,
 };
 
 const $ = (id) => document.getElementById(id);
@@ -36,7 +37,16 @@ async function loadSongs() {
     const btn = document.createElement("button");
     btn.className = "song-row";
     btn.type = "button";
-    btn.innerHTML = `<strong>${escapeHtml(song.title)}</strong><span>#${song.id}</span>`;
+
+    let titleHtml = escapeHtml(song.title);
+    const query = state.q ? state.q.trim() : "";
+    if (query) {
+      const escapedQuery = escapeRegExp(query);
+      const regex = new RegExp(`(${escapedQuery})`, "gi");
+      titleHtml = titleHtml.replace(regex, `<mark>$1</mark>`);
+    }
+
+    btn.innerHTML = `<strong>${titleHtml}</strong><span>#${song.id}</span>`;
     btn.addEventListener("click", () => loadSong(song.id));
     container.appendChild(btn);
   }
@@ -49,13 +59,21 @@ async function loadSongs() {
 }
 
 async function loadSong(id) {
+  state.currentSongId = id;
   const song = await fetchJson(`/api/songs/${id}`);
   $("reviewPanel").hidden = true;
   $("lyrics").hidden = false;
-  $("songTitle").textContent = song.title;
+
+  let titleHtml = escapeHtml(song.title);
+  const query = state.q ? state.q.trim() : "";
+  if (query) {
+    const escapedQuery = escapeRegExp(query);
+    const regex = new RegExp(`(${escapedQuery})`, "gi");
+    titleHtml = titleHtml.replace(regex, `<mark>$1</mark>`);
+  }
+  $("songTitle").innerHTML = titleHtml;
 
   let lyricsHtml = escapeHtml(song.lyrics || "沒有歌詞");
-  const query = state.q ? state.q.trim() : "";
   if (query) {
     const escapedQuery = escapeRegExp(query);
     const regex = new RegExp(`(${escapedQuery})`, "gi");
@@ -114,6 +132,9 @@ function doSearch() {
   state.q = $("searchInput").value.trim();
   state.offset = 0;
   refreshAll().catch(showError);
+  if (state.currentSongId) {
+    loadSong(state.currentSongId).catch(console.error);
+  }
 }
 
 function escapeHtml(text) {
