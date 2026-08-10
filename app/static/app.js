@@ -414,12 +414,6 @@ $("deleteSongBtn").addEventListener("click", () => deleteCurrentSong());
 $("searchBtn").addEventListener("click", doSearch);
 $("pptFilter").addEventListener("change", changePptFilter);
 $("refreshBtn").addEventListener("click", () => refreshAll().catch(showError));
-$("adminToggleBtn").addEventListener("click", () => {
-  state.admin = !state.admin;
-  $("reviewBtn").hidden = !state.admin;
-  $("adminToggleBtn").textContent = state.admin ? "一般模式" : "管理";
-  refreshAll().catch(showError);
-});
 $("reviewBtn").addEventListener("click", () => loadPendingReviews().catch(showError));
 $("reviewPanel").addEventListener("click", async (event) => {
   const button = event.target.closest("button");
