@@ -77,7 +77,6 @@ async function loadSong(id) {
   $("reviewPanel").hidden = true;
   $("lyrics").hidden = false;
   $("pptUploadPanel").hidden = true;
-  $("customPptBtn").hidden = false;
   $("togglePptUploadBtn").hidden = false;
   $("deleteSongBtn").hidden = false;
 

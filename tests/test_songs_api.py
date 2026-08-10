@@ -141,6 +141,7 @@ def test_new_song_frontend_is_wired_to_create_api():
     assert "custom-ppt-button" in html
     assert "upload-ppt-button" in html
     assert "button.hidden = customVersions.length === 0" in javascript
+    assert '$("customPptBtn").hidden = false;' not in javascript
     assert "/pptx?source=generated" in javascript
     assert 'fetchJson("/api/songs"' in javascript
     assert 'method: "POST"' in javascript
