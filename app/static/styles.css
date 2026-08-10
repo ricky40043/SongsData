@@ -54,7 +54,7 @@ h1 {
 button,
 .ppt-link {
   border: 1px solid #cfd7e3;
-  background: #ffffff;
+  background: #e8eef7;
   color: #1f2933;
   border-radius: 6px;
   padding: 10px 14px;
@@ -83,6 +83,39 @@ button:hover,
 .ppt-link:hover {
   background: #eef4ff;
   border-color: #8fb3ff;
+}
+
+.generated-ppt-button {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: #ffffff;
+}
+
+.generated-ppt-button:hover {
+  background: #1d4ed8;
+  border-color: #1d4ed8;
+}
+
+.custom-ppt-button {
+  background: #7c3aed;
+  border-color: #7c3aed;
+  color: #ffffff;
+}
+
+.custom-ppt-button:hover {
+  background: #6d28d9;
+  border-color: #6d28d9;
+}
+
+.upload-ppt-button {
+  background: #0f766e;
+  border-color: #0f766e;
+  color: #ffffff;
+}
+
+.upload-ppt-button:hover {
+  background: #0d5f59;
+  border-color: #0d5f59;
 }
 
 .search {
@@ -136,6 +169,17 @@ button:hover,
 
 .danger-button:hover {
   background: #fee4e2;
+}
+
+.ppt-version-option .ppt-link {
+  background: #7c3aed;
+  border-color: #7c3aed;
+  color: #ffffff;
+}
+
+.ppt-version-option .ppt-link:hover {
+  background: #6d28d9;
+  border-color: #6d28d9;
 }
 
 .upload-conflict {

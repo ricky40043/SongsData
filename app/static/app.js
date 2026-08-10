@@ -108,8 +108,8 @@ async function loadPptVersions(songId) {
   state.pptVersions = data.items;
   const customVersions = data.items.filter((version) => version.kind === "uploaded");
   const button = $("customPptBtn");
-  button.hidden = false;
-  button.textContent = customVersions.length ? `自定義 PPT（${customVersions.length}）` : "自定義 PPT";
+  button.hidden = customVersions.length === 0;
+  button.textContent = "下載自訂 PPT";
   return data;
 }
 
