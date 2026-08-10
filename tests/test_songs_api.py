@@ -129,5 +129,10 @@ def test_new_song_frontend_is_wired_to_create_api():
     assert 'id="newSongForm"' in html
     assert 'id="newSongTitle"' in html
     assert 'id="newSongLyrics"' in html
+    assert 'id="pptUploadForm"' in html
+    assert 'id="pptVersionName"' in html
+    assert 'id="deleteSongBtn"' in html
     assert 'fetchJson("/api/songs"' in javascript
     assert 'method: "POST"' in javascript
+    assert 'pptx-versions' in javascript
+    assert 'method: "DELETE"' in javascript

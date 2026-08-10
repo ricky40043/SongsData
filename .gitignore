@@ -6,6 +6,7 @@ data/*.db
 data/*.sqlite
 data/*.sqlite3
 data/exports/
+data/pptx/
 
 # The production SQLite database is host-persistent data, not source code.
 app/seed/*.db.gz

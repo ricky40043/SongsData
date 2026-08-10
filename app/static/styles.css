@@ -21,6 +21,7 @@ body {
 .topbar,
 .search,
 .new-song-panel,
+.ppt-upload-panel,
 .layout {
   max-width: 1200px;
   margin: 0 auto;
@@ -97,6 +98,75 @@ button:hover,
   background: #ffffff;
   border: 1px solid #dde3ea;
   border-radius: 8px;
+}
+
+.ppt-upload-panel {
+  margin-top: 16px;
+  padding: 16px;
+  background: #ffffff;
+  border: 1px solid #dde3ea;
+  border-radius: 8px;
+}
+
+.ppt-upload-panel h3 {
+  margin: 0 0 4px;
+  font-size: 18px;
+}
+
+.muted {
+  margin: 0;
+  color: #667085;
+  font-size: 13px;
+}
+
+.detail-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.danger-button {
+  color: #b42318;
+  border-color: #fecdca;
+  background: #fff5f4;
+}
+
+.danger-button:hover {
+  background: #fee4e2;
+}
+
+.upload-conflict {
+  margin-top: 14px;
+  padding: 12px;
+  border: 1px solid #fdb022;
+  border-radius: 6px;
+  background: #fffaeb;
+}
+
+.upload-conflict p {
+  margin: 6px 0 0;
+  color: #7a2e0e;
+}
+
+.ppt-versions {
+  display: grid;
+  gap: 6px;
+  margin-top: 16px;
+}
+
+.ppt-version-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 10px;
+  border-top: 1px solid #edf0f4;
+}
+
+.ppt-version-row small {
+  color: #667085;
 }
 
 .section-head {

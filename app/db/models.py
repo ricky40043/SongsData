@@ -21,6 +21,7 @@ class Song(Base):
     updated_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
     versions: Mapped[list["SongVersion"]] = relationship(back_populates="song")
+    ppt_versions: Mapped[list["SongPptVersion"]] = relationship(back_populates="song")
 
 
 class SongVersion(Base):
@@ -36,6 +37,34 @@ class SongVersion(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     song: Mapped[Song] = relationship(back_populates="versions")
+
+
+class SongPptVersion(Base):
+    """A user-uploaded PPTX associated with a song.
+
+    The generated PPTX is intentionally not persisted here: it remains a
+    reproducible export.  Adding this table is safe for existing SQLite
+    databases because ``create_all`` only creates missing tables.
+    """
+
+    __tablename__ = "song_ppt_versions"
+    __table_args__ = (
+        UniqueConstraint("song_id", "version_name", name="uq_song_ppt_version_name"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    song_id: Mapped[int] = mapped_column(ForeignKey("songs.id"), index=True)
+    version_name: Mapped[str] = mapped_column(String(100), nullable=False)
+    file_path: Mapped[str] = mapped_column(String(1000), nullable=False)
+    download_filename: Mapped[str] = mapped_column(String(255), nullable=False)
+    sha256: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    file_size: Mapped[int] = mapped_column(Integer, nullable=False)
+    is_default: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    overrides_generated: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+
+    song: Mapped[Song] = relationship(back_populates="ppt_versions")
 
 
 class SongLine(Base):

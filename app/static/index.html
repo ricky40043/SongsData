@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>詩歌資料庫</title>
-    <link rel="stylesheet" href="/static/styles.css?v=1.0.3" />
+    <link rel="stylesheet" href="/static/styles.css?v=1.1.0" />
   </head>
   <body>
     <main class="app">
@@ -75,9 +75,48 @@
               <button id="backBtn" class="back-btn" type="button">⬅ 返回</button>
               <h2 id="songTitle">選擇一首歌</h2>
             </div>
-            <a id="pptLink" class="ppt-link" href="#" hidden>下載 PPTX</a>
+            <div class="detail-actions">
+              <a id="pptLink" class="ppt-link" href="#" hidden>下載標準 PPTX</a>
+              <button id="deleteSongBtn" class="danger-button" type="button" hidden>刪除歌曲</button>
+            </div>
           </div>
           <pre id="lyrics">你可以搜尋歌詞片段或歌名。</pre>
+          <section id="pptUploadPanel" class="ppt-upload-panel" hidden>
+            <div class="section-head">
+              <div>
+                <h3>自訂 PPTX 版本</h3>
+                <p class="muted">上傳後可選擇覆蓋標準下載，或另存成新的版本。</p>
+              </div>
+              <button id="togglePptUploadBtn" type="button">上傳 PPTX</button>
+            </div>
+            <form id="pptUploadForm" hidden>
+              <div class="form-grid">
+                <label>
+                  版本名稱 <span class="required-mark">*</span>
+                  <input id="pptVersionName" maxlength="100" value="自訂版" required />
+                </label>
+                <label>
+                  PPTX 檔案 <span class="required-mark">*</span>
+                  <input id="pptFile" type="file" accept=".pptx,application/vnd.openxmlformats-officedocument.presentationml.presentation" required />
+                </label>
+              </div>
+              <div class="form-actions">
+                <button id="uploadPptBtn" type="submit">開始上傳</button>
+                <button id="cancelPptUploadBtn" type="button">取消</button>
+                <span id="pptUploadStatus" role="status" aria-live="polite"></span>
+              </div>
+            </form>
+            <div id="pptUploadConflict" class="upload-conflict" hidden>
+              <strong>這首歌已有 PPTX</strong>
+              <p id="pptConflictMessage"></p>
+              <div class="form-actions">
+                <button id="overwritePptBtn" type="button">覆蓋標準下載</button>
+                <button id="newPptVersionBtn" type="button">另存新版本</button>
+                <button id="cancelPptConflictBtn" type="button">取消</button>
+              </div>
+            </div>
+            <div id="pptVersions" class="ppt-versions"></div>
+          </section>
           <div id="reviewPanel" class="review-panel" hidden></div>
         </article>
       </section>

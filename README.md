@@ -13,6 +13,9 @@
 - 非重複資料可自動核准寫入 `songs` / `song_versions` / `song_lines` / `song_slides`。
 - FastAPI 搜尋與 PPTX 下載 API。
 - 可由 API／前端新增詩歌，並沿用正規化與 lyrics hash 去重。
+- 可上傳自訂 PPTX，選擇覆蓋標準下載或另存自訂版本，並逐版本下載。
+- 刪除歌曲必須輸入密碼，且會一併清理該歌曲的上傳 PPTX。
+- 每日以 SQLite 線上快照備份資料庫與上傳 PPTX 到 Google Drive，保留最近 30 天。
 - CLI 可跑 2 萬 ID 區間匯入。
 
 ## 安裝
@@ -93,6 +96,10 @@ uvicorn app.main:app --reload
 - `GET /api/songs/search?keyword=現在活著的不再是我`
 - `POST /api/songs`
 - `GET /api/songs/{song_id}`
+- `GET /api/songs/{song_id}/pptx-versions`
+- `POST /api/songs/{song_id}/pptx-versions`（multipart：`file`、`version_name`、`action`）
+- `GET /api/songs/{song_id}/pptx-versions/{version_id}/download`
+- `DELETE /api/songs/{song_id}`（JSON：`{"password":"..."}`）
 - `GET /api/imports/pending`
 - `POST /api/imports/{staging_id}/approve`
 - `GET /api/songs/{song_id}/pptx`
@@ -126,6 +133,7 @@ Docker Compose 會把主機的：
 ```
 
 掛載到容器的 `/app/data`。因此正式部署前，請先確認主機已有 `data/songs.db`；第一次使用空資料庫時，應先透過匯入或新增流程建立資料。
+上傳的 PPTX 會放在 `data/pptx/<song_id>/`，同樣由主機掛載保存，不會進入 Git 或 Docker image。
 
 本機測試結果：
 
@@ -175,6 +183,26 @@ DATABASE_URL=postgresql://USER:PASSWORD@HOST:PORT/DBNAME
 ### 主機部署的資料保留
 
 主機部署使用 Docker Compose 的 `./data:/app/data` 掛載。Git 同步或 `docker compose up --build` 不會刪除或重新下載主機上的 `data/songs.db`；請將資料庫視為部署主機的資料資產，並另外安排備份。
+
+### Google Drive 每日備份
+
+主機已有 `rclone` 的 `gdrive:` remote 時，安裝並啟用 systemd timer：
+
+```bash
+./scripts/install_backup_timer.sh
+```
+
+排程每天 04:00（Asia/Taipei）執行，內容包括：
+
+- SQLite 線上快照 `database/daily/`，以及一份最新資料庫。
+- `data/pptx/` 的當日快照 `pptx/daily/YYYY-MM-DD/`，以及一份最新 PPTX。
+- Google Drive 僅保留最近 30 天的每日資料庫與 PPTX 快照。
+
+可用環境變數改變目的地：
+
+```bash
+SONGSDATA_BACKUP_REMOTE="gdrive:詩歌庫/自動備份"
+```
 
 ## 產生 PPTX
 

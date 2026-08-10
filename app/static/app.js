@@ -4,6 +4,7 @@ const state = {
   limit: 50,
   admin: false,
   currentSongId: null,
+  pendingPptUpload: null,
 };
 
 const $ = (id) => document.getElementById(id);
@@ -71,9 +72,11 @@ async function loadSongs() {
 
 async function loadSong(id) {
   state.currentSongId = id;
-  const song = await fetchJson(`/api/songs/${id}`);
+  const [song] = await Promise.all([fetchJson(`/api/songs/${id}`), loadPptVersions(id)]);
   $("reviewPanel").hidden = true;
   $("lyrics").hidden = false;
+  $("pptUploadPanel").hidden = false;
+  $("deleteSongBtn").hidden = false;
 
   let titleHtml = escapeHtml(song.title);
   const query = state.q ? state.q.trim() : "";
@@ -95,6 +98,23 @@ async function loadSong(id) {
   $("pptLink").hidden = false;
   $("pptLink").href = `/api/songs/${id}/pptx`;
   showDetailView();
+}
+
+async function loadPptVersions(songId) {
+  const data = await fetchJson(`/api/songs/${songId}/pptx-versions`);
+  const container = $("pptVersions");
+  container.innerHTML = "";
+  for (const version of data.items) {
+    const row = document.createElement("div");
+    row.className = "ppt-version-row";
+    const badge = version.kind === "generated" ? "系統" : "上傳";
+    const defaultLabel = version.is_default ? " · 標準下載" : "";
+    row.innerHTML = `<span><strong>${escapeHtml(version.version_name)}</strong> <small>${badge}${defaultLabel}</small></span><a href="${escapeHtml(version.download_url)}">下載</a>`;
+    container.appendChild(row);
+  }
+  if (!data.items.length) {
+    container.innerHTML = '<p class="muted">目前沒有可下載的 PPTX。</p>';
+  }
 }
 
 function escapeRegExp(string) {
@@ -121,6 +141,8 @@ function showListView() {
 
 async function loadPendingReviews() {
   const data = await fetchJson("/api/imports/pending?limit=50");
+  $("pptUploadPanel").hidden = true;
+  $("deleteSongBtn").hidden = true;
   $("songTitle").textContent = "待審核";
   $("pptLink").hidden = true;
   $("lyrics").hidden = true;
@@ -212,6 +234,91 @@ async function submitNewSong(event) {
   }
 }
 
+function setPptUploadStatus(message, kind = "") {
+  const status = $("pptUploadStatus");
+  status.textContent = message;
+  status.className = kind;
+}
+
+function setPptUploadFormVisible(visible) {
+  $("pptUploadForm").hidden = !visible;
+  if (visible) $("pptFile").focus();
+}
+
+function clearPptUploadConflict() {
+  state.pendingPptUpload = null;
+  $("pptUploadConflict").hidden = true;
+  $("pptConflictMessage").textContent = "";
+}
+
+async function uploadPptx(action = "ask") {
+  const songId = state.currentSongId;
+  const file = state.pendingPptUpload?.file || $("pptFile").files[0];
+  const versionName = (state.pendingPptUpload?.versionName || $("pptVersionName").value).trim();
+  if (!songId || !file || !versionName) {
+    setPptUploadStatus("請選擇 .pptx 檔案並填寫版本名稱。", "error");
+    return;
+  }
+
+  const button = $("uploadPptBtn");
+  button.disabled = true;
+  setPptUploadStatus("上傳中...");
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("version_name", versionName);
+  formData.append("action", action);
+
+  try {
+    await fetchJson(`/api/songs/${songId}/pptx-versions`, {
+      method: "POST",
+      body: formData,
+    });
+    clearPptUploadConflict();
+    $("pptUploadForm").reset();
+    $("pptVersionName").value = "自訂版";
+    setPptUploadFormVisible(false);
+    setPptUploadStatus("PPTX 上傳完成。", "success");
+    await loadPptVersions(songId);
+    $("pptLink").href = `/api/songs/${songId}/pptx`;
+  } catch (error) {
+    const detail = error.payload && error.payload.detail;
+    if (error.status === 409 && detail && detail.code === "pptx_version_conflict") {
+      state.pendingPptUpload = { file, versionName };
+      $("pptConflictMessage").textContent = detail.message || "請選擇要覆蓋或另存新版本。";
+      $("pptUploadConflict").hidden = false;
+      setPptUploadStatus("請先選擇處理方式。", "error");
+    } else {
+      setPptUploadStatus(error.message || "PPTX 上傳失敗。", "error");
+    }
+  } finally {
+    button.disabled = false;
+  }
+}
+
+async function deleteCurrentSong() {
+  if (!state.currentSongId) return;
+  const password = window.prompt("刪除歌曲需要密碼：");
+  if (password === null) return;
+  if (!window.confirm("確定要刪除這首歌及其上傳的 PPTX 版本嗎？此操作無法復原。")) return;
+  try {
+    await fetchJson(`/api/songs/${state.currentSongId}`, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ password }),
+    });
+    state.currentSongId = null;
+    $("pptUploadPanel").hidden = true;
+    $("deleteSongBtn").hidden = true;
+    $("pptLink").hidden = true;
+    $("songTitle").textContent = "選擇一首歌";
+    $("lyrics").textContent = "你可以搜尋歌詞片段或歌名。";
+    showListView();
+    await refreshAll();
+  } catch (error) {
+    window.alert(error.message || "刪除失敗，請確認密碼。 ");
+  }
+}
+
 function doSearch() {
   state.q = $("searchInput").value.trim();
   state.offset = 0;
@@ -242,6 +349,20 @@ $("cancelNewSongBtn").addEventListener("click", () => {
   setNewSongStatus("");
 });
 $("newSongForm").addEventListener("submit", (event) => submitNewSong(event));
+$("togglePptUploadBtn").addEventListener("click", () => setPptUploadFormVisible($("pptUploadForm").hidden));
+$("cancelPptUploadBtn").addEventListener("click", () => {
+  setPptUploadFormVisible(false);
+  clearPptUploadConflict();
+  setPptUploadStatus("");
+});
+$("pptUploadForm").addEventListener("submit", (event) => {
+  event.preventDefault();
+  uploadPptx().catch(showError);
+});
+$("overwritePptBtn").addEventListener("click", () => uploadPptx("overwrite").catch(showError));
+$("newPptVersionBtn").addEventListener("click", () => uploadPptx("new_version").catch(showError));
+$("cancelPptConflictBtn").addEventListener("click", clearPptUploadConflict);
+$("deleteSongBtn").addEventListener("click", () => deleteCurrentSong());
 $("searchBtn").addEventListener("click", doSearch);
 $("refreshBtn").addEventListener("click", () => refreshAll().catch(showError));
 $("adminToggleBtn").addEventListener("click", () => {

@@ -1,0 +1,16 @@
+[Unit]
+Description=Back up SongsData database and uploaded PPTX files to Google Drive
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=ricky
+Group=ricky
+UMask=0077
+Environment=HOME=/home/ricky
+Environment="SONGSDATA_BACKUP_REMOTE=gdrive:詩歌庫/自動備份"
+ExecStart=/usr/bin/python3 /home/ricky/deployments/apps/SongsData/scripts/backup_songsdata.py
+Nice=10
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7

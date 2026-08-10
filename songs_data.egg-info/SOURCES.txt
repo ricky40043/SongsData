@@ -13,6 +13,7 @@ app/db/session.py
 app/services/importer.py
 app/services/normalizer.py
 app/services/ppt.py
+app/services/ppt_versions.py
 app/services/search.py
 app/services/slides.py
 songs_data.egg-info/PKG-INFO
@@ -21,5 +22,9 @@ songs_data.egg-info/dependency_links.txt
 songs_data.egg-info/entry_points.txt
 songs_data.egg-info/requires.txt
 songs_data.egg-info/top_level.txt
+tests/test_backup_songsdata.py
 tests/test_normalizer.py
+tests/test_ppt_payloads.py
+tests/test_pptx_versions_api.py
+tests/test_songs_api.py
 tests/test_taiwanbible_parser.py
