@@ -330,25 +330,26 @@ def list_songs(
     q: str = "",
     limit: int = 50,
     offset: int = 0,
+    has_ppt: bool = False,
     db: Session = Depends(get_db),
 ) -> dict:
     limit = min(max(limit, 1), 100)
     offset = max(offset, 0)
     normalized = normalize_text(q)
+    has_uploaded_ppt = select(SongPptVersion.id).where(
+        SongPptVersion.song_id == Song.id
+    ).exists()
 
     if normalized:
-        matching_song_ids = (
-            select(Song.id)
-            .outerjoin(SongLine, SongLine.song_id == Song.id)
-            .where(
-                or_(
-                    Song.normalized_title.contains(normalized),
-                    SongLine.normalized_text.contains(normalized),
-                )
+        matching_query = select(Song.id).outerjoin(SongLine, SongLine.song_id == Song.id).where(
+            or_(
+                Song.normalized_title.contains(normalized),
+                SongLine.normalized_text.contains(normalized),
             )
-            .distinct()
-            .subquery()
         )
+        if has_ppt:
+            matching_query = matching_query.where(has_uploaded_ppt)
+        matching_song_ids = matching_query.distinct().subquery()
         count_query = select(func.count()).select_from(matching_song_ids)
         rows_query = (
             select(Song)
@@ -360,11 +361,15 @@ def list_songs(
     else:
         count_query = select(func.count()).select_from(Song)
         rows_query = select(Song).order_by(Song.id.desc()).offset(offset).limit(limit)
+        if has_ppt:
+            count_query = count_query.where(has_uploaded_ppt)
+            rows_query = rows_query.where(has_uploaded_ppt)
 
     total = db.scalar(count_query) or 0
     songs = db.scalars(rows_query).all()
     return {
         "q": q,
+        "has_ppt": has_ppt,
         "limit": limit,
         "offset": offset,
         "total": total,
@@ -374,6 +379,12 @@ def list_songs(
                 "title": song.title,
                 "album": song.album,
                 "is_verified": song.is_verified,
+                "has_ppt": db.scalar(
+                    select(SongPptVersion.id)
+                    .where(SongPptVersion.song_id == song.id)
+                    .limit(1)
+                )
+                is not None,
                 "created_at": song.created_at.isoformat() if song.created_at else None,
             }
             for song in songs

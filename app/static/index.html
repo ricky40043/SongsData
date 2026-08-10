@@ -22,6 +22,10 @@
 
       <section class="search">
         <input id="searchInput" type="search" placeholder="搜尋歌名或歌詞，例如：現在活著的不再是我" />
+        <select id="pptFilter" aria-label="PPT 篩選">
+          <option value="all">所有歌曲</option>
+          <option value="custom">已有自訂 PPT</option>
+        </select>
         <button id="searchBtn" type="button">搜尋</button>
         <button id="reviewBtn" class="admin-only" type="button" hidden>待審核</button>
       </section>
@@ -134,6 +138,6 @@
         </article>
       </section>
     </main>
-    <script src="/static/app.js?v=1.3.1"></script>
+    <script src="/static/app.js?v=1.4.0"></script>
   </body>
 </html>

@@ -1,5 +1,6 @@
 const state = {
   q: "",
+  pptFilter: "all",
   offset: 0,
   limit: 50,
   admin: false,
@@ -40,8 +41,10 @@ async function loadSongs() {
     offset: String(state.offset),
     limit: String(state.limit),
   });
+  if (state.pptFilter === "custom") params.set("has_ppt", "true");
   const data = await fetchJson(`/api/songs?${params}`);
-  $("listTitle").textContent = state.q ? `搜尋：${state.q}` : "所有歌曲";
+  const filterTitle = state.pptFilter === "custom" ? " · 已有自訂 PPT" : "";
+  $("listTitle").textContent = state.q ? `搜尋：${state.q}${filterTitle}` : `所有歌曲${filterTitle}`;
   $("countText").textContent = `${data.total} 首`;
 
   const container = $("songs");
@@ -358,6 +361,13 @@ function doSearch() {
   showListView();
 }
 
+function changePptFilter() {
+  state.pptFilter = $("pptFilter").value;
+  state.offset = 0;
+  refreshAll().catch(showError);
+  showListView();
+}
+
 function escapeHtml(text) {
   return String(text)
     .replaceAll("&", "&amp;")
@@ -402,6 +412,7 @@ $("customPptModal").addEventListener("click", (event) => {
 });
 $("deleteSongBtn").addEventListener("click", () => deleteCurrentSong());
 $("searchBtn").addEventListener("click", doSearch);
+$("pptFilter").addEventListener("change", changePptFilter);
 $("refreshBtn").addEventListener("click", () => refreshAll().catch(showError));
 $("adminToggleBtn").addEventListener("click", () => {
   state.admin = !state.admin;

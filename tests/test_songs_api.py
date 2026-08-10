@@ -7,7 +7,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from app.db import models  # noqa: F401 - register all tables with Base.metadata.
-from app.db.models import Song, SongLine, SongSlide, SongVersion
+from app.db.models import Song, SongLine, SongPptVersion, SongSlide, SongVersion
 from app.db.session import Base, get_db
 from app.main import app
 
@@ -129,6 +129,8 @@ def test_new_song_frontend_is_wired_to_create_api():
     assert 'id="newSongForm"' in html
     assert 'id="newSongTitle"' in html
     assert 'id="newSongLyrics"' in html
+    assert 'id="pptFilter"' in html
+    assert "已有自訂 PPT" in html
     assert 'id="pptUploadForm"' in html
     assert 'id="pptVersionName"' in html
     assert 'id="deleteSongBtn"' in html
@@ -147,3 +149,53 @@ def test_new_song_frontend_is_wired_to_create_api():
     assert 'method: "POST"' in javascript
     assert 'pptx-versions' in javascript
     assert 'method: "DELETE"' in javascript
+    assert 'params.set("has_ppt", "true")' in javascript
+
+
+def test_list_songs_can_filter_to_uploaded_ppt_songs(client):
+    test_client, testing_session = client
+    without_ppt = test_client.post(
+        "/api/songs", json={"title": "沒有 PPT", "lyrics": "沒有 PPT 的歌詞"}
+    )
+    with_ppt = test_client.post(
+        "/api/songs", json={"title": "已有 PPT", "lyrics": "已有 PPT 的歌詞"}
+    )
+    assert without_ppt.status_code == 201
+    assert with_ppt.status_code == 201
+
+    with testing_session() as db:
+        db.add(
+            SongPptVersion(
+                song_id=with_ppt.json()["song_id"],
+                version_name="現場版",
+                file_path="data/pptx/2/1.pptx",
+                download_filename="已有 PPT.pptx",
+                sha256="a" * 64,
+                file_size=123,
+            )
+        )
+        db.commit()
+
+    response = test_client.get("/api/songs?has_ppt=true")
+
+    assert response.status_code == 200
+    assert response.json()["total"] == 1
+    assert response.json()["items"] == [
+        {
+            "id": with_ppt.json()["song_id"],
+            "title": "已有 PPT",
+            "album": None,
+            "is_verified": False,
+            "has_ppt": True,
+            "created_at": response.json()["items"][0]["created_at"],
+        }
+    ]
+
+    searched = test_client.get("/api/songs?q=已有&has_ppt=true")
+    assert searched.status_code == 200
+    assert searched.json()["total"] == 1
+    assert searched.json()["items"][0]["title"] == "已有 PPT"
+
+    all_songs = test_client.get("/api/songs")
+    assert all_songs.json()["total"] == 2
+    assert {item["has_ppt"] for item in all_songs.json()["items"]} == {False, True}
