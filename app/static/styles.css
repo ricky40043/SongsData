@@ -63,7 +63,50 @@ button,
   text-decoration: none;
 }
 
-select {
+#pptFilter,
+select.filter-control {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  min-width: 150px;
+  border: 1px solid #cfd7e3;
+  border-radius: 6px;
+  padding: 10px 36px 10px 14px;
+  background-color: #e8eef7 !important;
+  background-image:
+    linear-gradient(45deg, transparent 50%, #667085 50%),
+    linear-gradient(135deg, #667085 50%, transparent 50%);
+  background-position: calc(100% - 16px) 50%, calc(100% - 11px) 50%;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+  color: #1f2933;
+  font: inherit;
+  font-size: 14px;
+  line-height: 1.25;
+  cursor: pointer;
+}
+
+#pptFilter:hover,
+select.filter-control:hover {
+  background-color: #eef4ff !important;
+  border-color: #8fb3ff;
+}
+
+#pptFilter:focus-visible,
+select.filter-control:focus-visible {
+  outline: 3px solid #bfdbfe;
+  outline-offset: 1px;
+}
+
+/* Keep the option list readable when the browser opens the native menu. */
+#pptFilter option,
+select.filter-control option {
+  background: #ffffff;
+  color: #1f2933;
+}
+
+/* Legacy selector retained for other select controls added later. */
+select:not(.filter-control) {
   min-width: 150px;
   border: 1px solid #cfd7e3;
   border-radius: 6px;
@@ -104,14 +147,14 @@ button:hover,
   border-color: #8fb3ff;
 }
 
-select:hover {
+select:not(.filter-control):hover {
   background-color: #eef4ff;
   border-color: #8fb3ff;
 }
 
 button:focus-visible,
 .ppt-link:focus-visible,
-select:focus-visible {
+select:not(.filter-control):focus-visible {
   outline: 3px solid #bfdbfe;
   outline-offset: 1px;
 }
