@@ -132,6 +132,10 @@ def test_new_song_frontend_is_wired_to_create_api():
     assert 'id="pptUploadForm"' in html
     assert 'id="pptVersionName"' in html
     assert 'id="deleteSongBtn"' in html
+    assert 'id="customPptBtn"' in html
+    assert 'id="customPptModal"' in html
+    assert 'id="togglePptUploadBtn"' in html
+    assert "系統自動產生 PPT" in html
     assert 'fetchJson("/api/songs"' in javascript
     assert 'method: "POST"' in javascript
     assert 'pptx-versions' in javascript

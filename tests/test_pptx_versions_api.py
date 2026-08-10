@@ -111,6 +111,13 @@ def test_pptx_upload_ask_overwrite_new_version_and_download(pptx_client):
     assert standard.status_code == 200
     assert standard.content == _pptx_bytes("overwritten")
 
+    generated = test_client.get(f"/api/songs/{song_id}/pptx?source=generated")
+    assert generated.status_code == 200
+    assert generated.headers["content-type"].startswith(
+        "application/vnd.openxmlformats-officedocument.presentationml.presentation"
+    )
+    assert generated.content != standard.content
+
     listed = test_client.get(f"/api/songs/{song_id}/pptx-versions")
     assert listed.status_code == 200
     assert [item["kind"] for item in listed.json()["items"]] == [
@@ -118,6 +125,7 @@ def test_pptx_upload_ask_overwrite_new_version_and_download(pptx_client):
         "uploaded",
         "uploaded",
     ]
+    assert listed.json()["items"][0]["download_url"].endswith("?source=generated")
     assert sum(item["is_default"] for item in listed.json()["items"]) == 1
 
 

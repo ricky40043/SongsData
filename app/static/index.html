@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>詩歌資料庫</title>
-    <link rel="stylesheet" href="/static/styles.css?v=1.1.0" />
+    <link rel="stylesheet" href="/static/styles.css?v=1.2.0" />
   </head>
   <body>
     <main class="app">
@@ -76,18 +76,18 @@
               <h2 id="songTitle">選擇一首歌</h2>
             </div>
             <div class="detail-actions">
-              <a id="pptLink" class="ppt-link" href="#" hidden>下載標準 PPTX</a>
+              <a id="pptLink" class="ppt-link" href="#" hidden>系統自動產生 PPT</a>
+              <button id="customPptBtn" type="button" hidden>自定義 PPT</button>
+              <button id="togglePptUploadBtn" type="button" hidden>上傳 PPTX</button>
               <button id="deleteSongBtn" class="danger-button" type="button" hidden>刪除歌曲</button>
             </div>
           </div>
-          <pre id="lyrics">你可以搜尋歌詞片段或歌名。</pre>
           <section id="pptUploadPanel" class="ppt-upload-panel" hidden>
             <div class="section-head">
               <div>
                 <h3>自訂 PPTX 版本</h3>
                 <p class="muted">上傳後可選擇覆蓋標準下載，或另存成新的版本。</p>
               </div>
-              <button id="togglePptUploadBtn" type="button">上傳 PPTX</button>
             </div>
             <form id="pptUploadForm" hidden>
               <div class="form-grid">
@@ -115,12 +115,25 @@
                 <button id="cancelPptConflictBtn" type="button">取消</button>
               </div>
             </div>
-            <div id="pptVersions" class="ppt-versions"></div>
           </section>
+          <div id="customPptModal" class="ppt-modal" hidden>
+            <div class="ppt-modal-backdrop" data-close-custom-ppt></div>
+            <section class="ppt-modal-card" role="dialog" aria-modal="true" aria-labelledby="customPptModalTitle">
+              <div class="section-head">
+                <div>
+                  <h3 id="customPptModalTitle">選擇自定義 PPT</h3>
+                  <p class="muted">請選擇要下載的自定義版本。</p>
+                </div>
+                <button id="closeCustomPptModalBtn" type="button">關閉</button>
+              </div>
+              <div id="customPptOptions" class="ppt-version-options"></div>
+            </section>
+          </div>
+          <pre id="lyrics">你可以搜尋歌詞片段或歌名。</pre>
           <div id="reviewPanel" class="review-panel" hidden></div>
         </article>
       </section>
     </main>
-    <script src="/static/app.js?v=1.0.3"></script>
+    <script src="/static/app.js?v=1.2.0"></script>
   </body>
 </html>

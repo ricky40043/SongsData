@@ -121,7 +121,7 @@ def _generated_ppt_payload(song: Song, is_default: bool, request_base: str = "")
         "overrides_generated": False,
         "created_at": None,
         "updated_at": None,
-        "download_url": f"{request_base}/api/songs/{song.id}/pptx",
+        "download_url": f"{request_base}/api/songs/{song.id}/pptx?source=generated",
     }
 
 
@@ -149,7 +149,7 @@ def _ppt_upload_conflict(
                 "version_name": "system-generated",
                 "kind": "generated",
                 "is_default": not any(version.is_default for version in existing_versions),
-                "download_url": f"/api/songs/{song_id}/pptx",
+                "download_url": f"/api/songs/{song_id}/pptx?source=generated",
             },
         )
     return HTTPException(
@@ -449,10 +449,16 @@ def duplicate_import(staging_id: int, db: Session = Depends(get_db)) -> dict:
 
 
 @router.get("/songs/{song_id}/pptx")
-def download_pptx(song_id: int, db: Session = Depends(get_db)) -> FileResponse:
+def download_pptx(
+    song_id: int,
+    source: str = "standard",
+    db: Session = Depends(get_db),
+) -> FileResponse:
     song = db.get(Song, song_id)
     if not song:
         raise HTTPException(status_code=404, detail="Song not found")
+    if source not in {"standard", "generated"}:
+        raise HTTPException(status_code=422, detail="source must be standard or generated")
 
     uploaded_default = db.scalar(
         select(SongPptVersion)
@@ -460,7 +466,7 @@ def download_pptx(song_id: int, db: Session = Depends(get_db)) -> FileResponse:
         .order_by(SongPptVersion.id.desc())
         .limit(1)
     )
-    if uploaded_default:
+    if source == "standard" and uploaded_default:
         path = Path(uploaded_default.file_path)
         if not path.is_file():
             raise HTTPException(status_code=404, detail="Uploaded PPTX file not found")

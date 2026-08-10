@@ -125,6 +125,7 @@ button:hover,
   gap: 8px;
   flex-wrap: wrap;
   justify-content: flex-end;
+  max-width: 100%;
 }
 
 .danger-button {
@@ -166,6 +167,61 @@ button:hover,
 }
 
 .ppt-version-row small {
+  color: #667085;
+}
+
+.ppt-modal[hidden] {
+  display: none;
+}
+
+.ppt-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+}
+
+.ppt-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+}
+
+.ppt-modal-card {
+  position: relative;
+  width: min(560px, calc(100vw - 28px));
+  max-height: 80vh;
+  overflow: auto;
+  padding: 18px;
+  border: 1px solid #dde3ea;
+  border-radius: 10px;
+  background: #ffffff;
+  box-shadow: 0 18px 48px rgba(15, 23, 42, 0.22);
+}
+
+.ppt-version-options {
+  display: grid;
+  gap: 8px;
+}
+
+.ppt-version-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid #e6ebf1;
+  border-radius: 8px;
+  background: #fbfcfe;
+}
+
+.ppt-version-option span {
+  display: grid;
+  gap: 3px;
+}
+
+.ppt-version-option small {
   color: #667085;
 }
 
