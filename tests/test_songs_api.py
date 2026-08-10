@@ -131,6 +131,9 @@ def test_new_song_frontend_is_wired_to_create_api():
     assert 'id="newSongLyrics"' in html
     assert 'id="pptFilter"' in html
     assert "已有自訂 PPT" in html
+    styles = (root / "app/static/styles.css").read_text()
+    assert "select:hover" in styles
+    assert "appearance: none" in styles
     assert 'id="pptUploadForm"' in html
     assert 'id="pptVersionName"' in html
     assert 'id="deleteSongBtn"' in html
