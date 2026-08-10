@@ -115,9 +115,18 @@ def prune_remote_database_backups() -> None:
 
 def prune_remote_pptx_backups() -> None:
     remote = f"{REMOTE_ROOT}/pptx/daily"
+    try:
+        listing = run_rclone("lsf", remote, "--dirs-only", capture_output=True)
+    except subprocess.CalledProcessError as exc:
+        # Before the first PPTX upload, the remote directory does not exist.
+        # Database backup and the rest of the job should still complete.
+        if exc.returncode == 3:
+            LOG.info("尚無 Google Drive PPTX 每日備份目錄，略過清理")
+            return
+        raise
     names = sorted(
         match.group(1)
-        for raw in run_rclone("lsf", remote, "--dirs-only", capture_output=True).splitlines()
+        for raw in listing.splitlines()
         if (match := PPT_DATE_RE.match(raw.strip()))
     )
     for old_name in names[:-KEEP_DAYS]:
