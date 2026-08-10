@@ -135,7 +135,8 @@ def test_new_song_frontend_is_wired_to_create_api():
     assert 'id="customPptBtn"' in html
     assert 'id="customPptModal"' in html
     assert 'id="togglePptUploadBtn"' in html
-    assert "系統自動產生 PPT" in html
+    assert "下載系統產生 PPT" in html
+    assert "/pptx?source=generated" in javascript
     assert 'fetchJson("/api/songs"' in javascript
     assert 'method: "POST"' in javascript
     assert 'pptx-versions' in javascript
