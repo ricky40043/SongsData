@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>詩歌資料庫</title>
-    <link rel="stylesheet" href="/static/styles.css?v=1.0.2" />
+    <link rel="stylesheet" href="/static/styles.css?v=1.0.3" />
   </head>
   <body>
     <main class="app">
@@ -14,6 +14,7 @@
           <p id="stats">載入中...</p>
         </div>
         <div class="top-actions">
+          <button id="newSongBtn" type="button">新增詩歌</button>
           <button id="adminToggleBtn" type="button">管理</button>
           <button id="refreshBtn" type="button">重新整理</button>
         </div>
@@ -23,6 +24,36 @@
         <input id="searchInput" type="search" placeholder="搜尋歌名或歌詞，例如：現在活著的不再是我" />
         <button id="searchBtn" type="button">搜尋</button>
         <button id="reviewBtn" class="admin-only" type="button" hidden>待審核</button>
+      </section>
+
+      <section id="newSongPanel" class="new-song-panel" hidden>
+        <div class="section-head">
+          <h2>新增詩歌</h2>
+          <button id="cancelNewSongBtn" type="button">取消</button>
+        </div>
+        <form id="newSongForm">
+          <div class="form-grid">
+            <label>
+              歌名 <span class="required-mark">*</span>
+              <input id="newSongTitle" name="title" maxlength="300" required />
+            </label>
+            <label>專輯（選填）<input id="newSongAlbum" name="album" maxlength="300" /></label>
+            <label>作者（選填）<input id="newSongAuthor" name="author" maxlength="300" /></label>
+            <label>作曲（選填）<input id="newSongComposer" name="composer" maxlength="300" /></label>
+            <label class="wide-field">
+              版權備註（選填）
+              <input id="newSongCopyright" name="copyright_note" maxlength="1000" />
+            </label>
+          </div>
+          <label>
+            歌詞 <span class="required-mark">*</span>
+            <textarea id="newSongLyrics" name="lyrics" maxlength="100000" rows="10" required></textarea>
+          </label>
+          <div class="form-actions">
+            <button id="saveSongBtn" type="submit">儲存詩歌</button>
+            <span id="newSongStatus" role="status" aria-live="polite"></span>
+          </div>
+        </form>
       </section>
 
       <section class="layout view-list">
@@ -51,6 +82,6 @@
         </article>
       </section>
     </main>
-    <script src="/static/app.js?v=1.0.2"></script>
+    <script src="/static/app.js?v=1.0.3"></script>
   </body>
 </html>

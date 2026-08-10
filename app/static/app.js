@@ -10,8 +10,19 @@ const $ = (id) => document.getElementById(id);
 
 async function fetchJson(url, options = undefined) {
   const res = await fetch(url, options);
-  if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
-  return res.json();
+  const data = await res.json().catch(() => null);
+  if (!res.ok) {
+    const detail = data && data.detail;
+    const message =
+      detail && typeof detail === "object"
+        ? detail.message || "請求失敗"
+        : detail || `${res.status} ${res.statusText}`;
+    const error = new Error(message);
+    error.status = res.status;
+    error.payload = data;
+    throw error;
+  }
+  return data;
 }
 
 async function loadStats() {
@@ -147,6 +158,60 @@ async function refreshAll() {
   await Promise.all([loadStats(), loadSongs()]);
 }
 
+function setNewSongStatus(message, kind = "") {
+  const status = $("newSongStatus");
+  status.textContent = message;
+  status.className = kind;
+}
+
+function toggleNewSongPanel(show) {
+  $("newSongPanel").hidden = !show;
+  if (show) {
+    $("newSongTitle").focus();
+  }
+}
+
+async function submitNewSong(event) {
+  event.preventDefault();
+  const submitButton = $("saveSongBtn");
+  submitButton.disabled = true;
+  setNewSongStatus("儲存中...");
+
+  const value = (id) => $(id).value.trim();
+  const payload = {
+    title: value("newSongTitle"),
+    lyrics: $("newSongLyrics").value.trim(),
+    album: value("newSongAlbum") || null,
+    author: value("newSongAuthor") || null,
+    composer: value("newSongComposer") || null,
+    copyright_note: value("newSongCopyright") || null,
+  };
+
+  try {
+    const created = await fetchJson("/api/songs", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    await refreshAll();
+    await loadSong(created.song_id);
+    setNewSongStatus(`已新增「${created.title}」(#${created.song_id})`, "success");
+    $("newSongForm").reset();
+  } catch (error) {
+    const detail = error.payload && error.payload.detail;
+    const duplicateId = detail && typeof detail === "object" ? detail.song_id : null;
+    if (error.status === 409 && duplicateId) {
+      await refreshAll();
+      await loadSong(duplicateId);
+      setNewSongStatus(`詩歌已存在（既有歌曲 #${duplicateId}），未重複新增。`, "error");
+    } else {
+      setNewSongStatus(error.message || "新增失敗", "error");
+    }
+  } finally {
+    submitButton.disabled = false;
+  }
+}
+
 function doSearch() {
   state.q = $("searchInput").value.trim();
   state.offset = 0;
@@ -169,6 +234,14 @@ function showError(error) {
   $("stats").textContent = `讀取失敗：${error.message}`;
 }
 
+$("newSongBtn").addEventListener("click", () => {
+  toggleNewSongPanel($("newSongPanel").hidden);
+});
+$("cancelNewSongBtn").addEventListener("click", () => {
+  toggleNewSongPanel(false);
+  setNewSongStatus("");
+});
+$("newSongForm").addEventListener("submit", (event) => submitNewSong(event));
 $("searchBtn").addEventListener("click", doSearch);
 $("refreshBtn").addEventListener("click", () => refreshAll().catch(showError));
 $("adminToggleBtn").addEventListener("click", () => {

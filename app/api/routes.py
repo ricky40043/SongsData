@@ -2,17 +2,53 @@ from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import FileResponse
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 from sqlalchemy import func, or_, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.db.models import Song, SongImportStaging, SongLine, SongVersion
+from app.db.models import Song, SongImportStaging, SongLine, SongSlide, SongVersion
 from app.db.session import get_db
 from app.services.importer import approve_staging, mark_staging_duplicate
-from app.services.normalizer import normalize_text
+from app.services.normalizer import clean_lines, lyrics_hash, normalize_text
 from app.services.ppt import generate_song_pptx, song_pptx_filename
 from app.services.search import search_songs
+from app.services.slides import split_lyrics_to_slides
 
 router = APIRouter(prefix="/api")
+
+MAX_TITLE_LENGTH = 300
+MAX_LYRICS_LENGTH = 100_000
+MAX_METADATA_LENGTH = 300
+MAX_COPYRIGHT_LENGTH = 1_000
+MAX_LINE_LENGTH = 500
+
+
+class CreateSongRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    title: str = Field(..., max_length=MAX_TITLE_LENGTH)
+    lyrics: str = Field(..., max_length=MAX_LYRICS_LENGTH)
+    album: str | None = Field(default=None, max_length=MAX_METADATA_LENGTH)
+    author: str | None = Field(default=None, max_length=MAX_METADATA_LENGTH)
+    composer: str | None = Field(default=None, max_length=MAX_METADATA_LENGTH)
+    copyright_note: str | None = Field(default=None, max_length=MAX_COPYRIGHT_LENGTH)
+
+    @field_validator("title", "lyrics")
+    @classmethod
+    def require_content(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError("must not be blank")
+        return value
+
+    @field_validator("album", "author", "composer", "copyright_note")
+    @classmethod
+    def trim_optional_content(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        value = value.strip()
+        return value or None
 
 
 @router.get("/health")
@@ -31,6 +67,140 @@ def stats(db: Session = Depends(get_db)) -> dict:
             .where(SongImportStaging.parse_status == "parsed")
         )
         or 0,
+    }
+
+
+def _raise_song_duplicate(song: Song, duplicate_field: str) -> None:
+    messages = {
+        "title": "A song with this title already exists.",
+        "lyrics_hash": "A song with the same lyrics already exists.",
+    }
+    raise HTTPException(
+        status_code=409,
+        detail={
+            "code": "duplicate_song",
+            "message": messages[duplicate_field],
+            "duplicate_field": duplicate_field,
+            "song_id": song.id,
+        },
+    )
+
+
+def _handle_song_integrity_error(db: Session, digest: str, exc: IntegrityError) -> None:
+    db.rollback()
+    existing_lyrics = db.scalar(
+        select(Song)
+        .join(SongVersion, SongVersion.song_id == Song.id)
+        .where(SongVersion.lyrics_hash == digest)
+        .order_by(Song.id)
+        .limit(1)
+    )
+    if existing_lyrics:
+        _raise_song_duplicate(existing_lyrics, "lyrics_hash")
+    raise HTTPException(
+        status_code=409,
+        detail={
+            "code": "song_not_created",
+            "message": "The song could not be created safely; please retry.",
+        },
+    ) from exc
+
+
+@router.post("/songs", status_code=201)
+def create_song(payload: CreateSongRequest, db: Session = Depends(get_db)) -> dict:
+    normalized_title = normalize_text(payload.title)
+    normalized_lyrics = normalize_text(payload.lyrics)
+    if not normalized_title:
+        raise HTTPException(status_code=422, detail="title must contain text")
+    if not normalized_lyrics:
+        raise HTTPException(status_code=422, detail="lyrics must contain text")
+
+    lines = clean_lines(payload.lyrics)
+    if not lines:
+        raise HTTPException(status_code=422, detail="lyrics must contain at least one line")
+    if any(len(line) > MAX_LINE_LENGTH for line in lines):
+        raise HTTPException(
+            status_code=422,
+            detail=f"each lyric line must be at most {MAX_LINE_LENGTH} characters",
+        )
+
+    digest = lyrics_hash(normalized_lyrics)
+    existing_title = db.scalar(
+        select(Song)
+        .where(Song.normalized_title == normalized_title)
+        .order_by(Song.id)
+        .limit(1)
+    )
+    if existing_title:
+        _raise_song_duplicate(existing_title, "title")
+
+    existing_lyrics = db.scalar(
+        select(Song)
+        .join(SongVersion, SongVersion.song_id == Song.id)
+        .where(SongVersion.lyrics_hash == digest)
+        .order_by(Song.id)
+        .limit(1)
+    )
+    if existing_lyrics:
+        _raise_song_duplicate(existing_lyrics, "lyrics_hash")
+
+    song = Song(
+        title=payload.title,
+        normalized_title=normalized_title,
+        album=payload.album,
+        author=payload.author,
+        composer=payload.composer,
+        copyright_note=payload.copyright_note,
+        is_verified=False,
+    )
+    db.add(song)
+    db.flush()
+
+    version = SongVersion(
+        song_id=song.id,
+        version_name="default",
+        raw_lyrics=payload.lyrics,
+        normalized_lyrics=normalized_lyrics,
+        lyrics_hash=digest,
+        is_default=True,
+    )
+    db.add(version)
+    try:
+        db.flush()
+    except IntegrityError as exc:
+        _handle_song_integrity_error(db, digest, exc)
+
+    for line_order, line in enumerate(lines, start=1):
+        db.add(
+            SongLine(
+                song_id=song.id,
+                version_id=version.id,
+                line_order=line_order,
+                text=line,
+                normalized_text=normalize_text(line),
+            )
+        )
+
+    for slide_order, slide_text in enumerate(split_lyrics_to_slides(payload.lyrics), start=1):
+        db.add(
+            SongSlide(
+                song_id=song.id,
+                version_id=version.id,
+                slide_order=slide_order,
+                text=slide_text,
+                line_count=len(clean_lines(slide_text)),
+            )
+        )
+
+    try:
+        db.commit()
+    except IntegrityError as exc:
+        _handle_song_integrity_error(db, digest, exc)
+
+    return {
+        "status": "created",
+        "song_id": song.id,
+        "title": song.title,
     }
 
 
@@ -105,6 +275,10 @@ def get_song(song_id: int, db: Session = Depends(get_db)) -> dict:
         "id": song.id,
         "title": song.title,
         "lyrics": version.raw_lyrics if version else "",
+        "album": song.album,
+        "author": song.author,
+        "composer": song.composer,
+        "copyright_note": song.copyright_note,
         "is_verified": song.is_verified,
     }
 

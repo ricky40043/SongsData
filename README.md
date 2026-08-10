@@ -1,6 +1,8 @@
 # Songs Data MVP
 
-本專案是「本地詩歌資料庫 + 爬蟲匯入 + 搜尋 API + PPTX 產生」的第一版 MVP。
+本專案是「詩歌資料庫 + 爬蟲匯入 + 搜尋 API + PPTX 產生」的第一版 MVP。
+
+正式環境的 SQLite 資料庫是主機持久化資料，不納入 Git 版控。部署只更新程式與容器，必須保留主機上的 `data/songs.db`。
 
 目前已實作：
 
@@ -10,6 +12,7 @@
 - 歌名、歌詞正規化與 lyrics hash 去重。
 - 非重複資料可自動核准寫入 `songs` / `song_versions` / `song_lines` / `song_slides`。
 - FastAPI 搜尋與 PPTX 下載 API。
+- 可由 API／前端新增詩歌，並沿用正規化與 lyrics hash 去重。
 - CLI 可跑 2 萬 ID 區間匯入。
 
 ## 安裝
@@ -88,6 +91,7 @@ uvicorn app.main:app --reload
 
 - `GET /api/health`
 - `GET /api/songs/search?keyword=現在活著的不再是我`
+- `POST /api/songs`
 - `GET /api/songs/{song_id}`
 - `GET /api/imports/pending`
 - `POST /api/imports/{staging_id}/approve`
@@ -95,7 +99,7 @@ uvicorn app.main:app --reload
 
 ## Docker
 
-本專案可以直接包成 Docker image，內含 FastAPI 程式、PPT 模板與壓縮後的 SQLite seed database。
+本專案可以直接包成 Docker image；SQLite 資料庫不放入 image，而是由執行環境提供的持久化 `data/songs.db`。
 
 Build：
 
@@ -115,17 +119,13 @@ docker run --rm -p 10000:10000 songs-data:local
 http://localhost:10000
 ```
 
-啟動時會自動把：
+Docker Compose 會把主機的：
 
 ```text
-app/seed/songs.db.gz
+./data
 ```
 
-還原成容器內的：
-
-```text
-data/songs.db
-```
+掛載到容器的 `/app/data`。因此正式部署前，請先確認主機已有 `data/songs.db`；第一次使用空資料庫時，應先透過匯入或新增流程建立資料。
 
 本機測試結果：
 
@@ -143,7 +143,6 @@ image size  -> 約 303MB
 render.yaml
 scripts/render_start.sh
 .python-version
-app/seed/songs.db.gz
 ```
 
 ### 部署方式
@@ -165,42 +164,17 @@ Render Web Service 必須綁定 `0.0.0.0` 和 `$PORT`。`scripts/render_start.sh
 python -m uvicorn app.main:app --host 0.0.0.0 --port "${PORT:-10000}"
 ```
 
-### SQLite 固定資料庫
+### SQLite 持久化注意事項
 
-Render 免費 Web Service 沒有 persistent disk，因此本專案採用「固定 SQLite 種子資料庫」：
-
-```text
-app/seed/songs.db.gz
-```
-
-服務啟動時會自動解壓成：
-
-```text
-data/songs.db
-```
-
-這代表：
-
-- 適合固定 16,000+ 首歌的查詢與 PPT 產生。
-- Render 重啟或重新部署後仍會從 seed 還原資料。
-- 不適合在 Render 上跑爬蟲後期待資料永久保存。
-- 若要更新歌曲庫，請在本機更新 `data/songs.db` 後重新產生 `app/seed/songs.db.gz` 並重新部署。
-
-重新產生 seed：
-
-```bash
-gzip -c data/songs.db > app/seed/songs.db.gz
-```
-
-### 若未來改外部資料庫
-
-若要改用 Supabase / Neon / Render Postgres，只要把 Render 的環境變數改成：
+Render 免費 Web Service 沒有 persistent disk，且本專案不再把 SQLite seed 放進 Git。若部署到 Render，請改用 PostgreSQL 或其他具持久化能力的外部資料庫：
 
 ```text
 DATABASE_URL=postgresql://USER:PASSWORD@HOST:PORT/DBNAME
 ```
 
-但第一版最簡單、免費、最快能跑起來的方式仍是目前的 SQLite seed 檔。
+### 主機部署的資料保留
+
+主機部署使用 Docker Compose 的 `./data:/app/data` 掛載。Git 同步或 `docker compose up --build` 不會刪除或重新下載主機上的 `data/songs.db`；請將資料庫視為部署主機的資料資產，並另外安排備份。
 
 ## 產生 PPTX
 

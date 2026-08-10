@@ -20,6 +20,7 @@ body {
 
 .topbar,
 .search,
+.new-song-panel,
 .layout {
   max-width: 1200px;
   margin: 0 auto;
@@ -88,6 +89,78 @@ button:hover,
   grid-template-columns: 1fr auto auto;
   gap: 10px;
   margin-bottom: 16px;
+}
+
+.new-song-panel {
+  margin-bottom: 16px;
+  padding: 16px;
+  background: #ffffff;
+  border: 1px solid #dde3ea;
+  border-radius: 8px;
+}
+
+.section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.section-head h2 {
+  font-size: 20px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+label {
+  display: grid;
+  gap: 6px;
+  color: #344054;
+  font-size: 14px;
+}
+
+.wide-field {
+  grid-column: 1 / -1;
+}
+
+textarea {
+  width: 100%;
+  resize: vertical;
+  border: 1px solid #cfd7e3;
+  border-radius: 6px;
+  padding: 12px 14px;
+  font: inherit;
+  line-height: 1.6;
+}
+
+.required-mark {
+  color: #b42318;
+}
+
+.form-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+#newSongStatus {
+  color: #667085;
+  font-size: 14px;
+}
+
+#newSongStatus.success {
+  color: #067647;
+}
+
+#newSongStatus.error {
+  color: #b42318;
 }
 
 input {
@@ -239,6 +312,14 @@ mark {
 
   .search {
     grid-template-columns: 1fr;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .wide-field {
+    grid-column: auto;
   }
 
   .back-btn {

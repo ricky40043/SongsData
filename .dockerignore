@@ -9,6 +9,7 @@ data/*.db
 data/*.sqlite
 data/*.sqlite3
 data/exports
+app/seed/*.db.gz
 logs
 *.egg-info
 tests

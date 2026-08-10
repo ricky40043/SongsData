@@ -3,9 +3,8 @@ set -euo pipefail
 
 mkdir -p data data/exports
 
-if [ ! -f data/songs.db ] && [ -f app/seed/songs.db.gz ]; then
-  echo "Restoring SQLite seed database..."
-  gzip -dc app/seed/songs.db.gz > data/songs.db
+if [ ! -f data/songs.db ]; then
+  echo "No persistent SQLite database found; starting with an empty schema."
 fi
 
 PYTHON_BIN="${PYTHON_BIN:-python}"
